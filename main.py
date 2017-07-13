@@ -127,6 +127,9 @@ def handle_msg(msg, last_update):
     # delete counting
     elif msg_text.lower()[:12] == '!bot delete ':
         counting_delete(chat_id=msg_chat_id, req=msg_text[12:])
+    # show help
+    elif msg_text.lower()[:9] == '!bot help' and len(msg_text) == 9:
+        send_help(chat_id=msg_chat_id)
     # echo
     elif I.LAST_ID == msg_id:
         print(f'At {msg_time} user {msg_user} from {msg_chat_id} post message #{msg_id}:\n\t{msg_text}\n{msg_header}\n')
@@ -207,6 +210,20 @@ def counting_delete(chat_id, req):
         temp = 'Nothing to delete'
     send_msg(chat_id=chat_id, text=temp)
     connect.close()
+
+
+def send_help(chat_id):
+    text = '''
+*"Days since"* commands:
+`!bot start counting days since <smth>` - start counting unique event for user|group
+`!bot show <smth>` - show how many days sice event _<smth>_
+`!bot show all` - show all events for user|group
+`!bot reset <smth>` - reset counter for event _<smth>_
+`!bot delete <smth>` - delete counter for event _<smth>_
+`!bot help` - idk
+'''
+    req = f'{I.HOST}/sendMessage?chat_id={chat_id}&text={text}&parse_mode=markdown'
+    return action(req)
 
 
 def warn(msg):
