@@ -1,2 +1,2 @@
-# Days-since-telegram-bot-
+# Days since (telegram bot)
 Can count days since smth
