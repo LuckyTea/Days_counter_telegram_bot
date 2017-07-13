@@ -1,6 +1,6 @@
 '''
 Days since telegram bot
-Can count days since smth, last jew tricks for example
+Can count days since smth, for example - last jewish tricks
 '''
 import datetime
 import json

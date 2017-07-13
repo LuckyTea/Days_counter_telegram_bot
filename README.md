@@ -1,5 +1,6 @@
 # Days since (telegram bot)
-Can count days since events
+Can count days since events  
+Bot contact: `@tricks_counter_bot`
 
 # Bot commands
 `!bot start` counting days since <smth> - start counting unique event for user|group with text <smth>  
