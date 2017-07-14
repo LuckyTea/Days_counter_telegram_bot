@@ -112,7 +112,7 @@ def handle_msg(msg, last_update):
 
     # shutdown button
     if msg_text.lower() == '/bot_stop' and msg_chat_id == config.owner_id and I.LAST_ID == msg_id:
-        send_msg(chat_id=msg_chat_id, text=f'Bot shutdown')
+        send_sticker(chat_id=msg_chat_id, file_id='CAADAgADwwQAAvoLtgiyQa_zvBHWHwI')
         get_updates(msg_id)
         return False
     # start counting
@@ -140,6 +140,11 @@ def handle_msg(msg, last_update):
 def send_msg(chat_id=config.owner_id, text='Good day, sir!'):
     text = urllib.parse.quote_plus(text)
     req = f'{I.HOST}/sendMessage?chat_id={chat_id}&text={text}'
+    return action(req)
+
+
+def send_sticker(file_id, chat_id=config.owner_id):
+    req = f'{I.HOST}/sendSticker?chat_id={chat_id}&sticker={file_id}'
     return action(req)
 
 
