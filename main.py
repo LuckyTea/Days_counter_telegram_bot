@@ -204,16 +204,13 @@ def counting_delete(chat_id, req):
     connect = sqlite3.connect('precious.db')
     c = connect.cursor()
     try:
-        result = c.execute("SELECT * FROM MAIN WHERE CHAT_ID=? AND NAME=?", (str(chat_id), str(req)))
-        for row in result:
-            c.execute("DELETE FROM MAIN where ID=?", (str(row[0])))
-            connect.commit()
-            print("Total number of rows deleted :", connect.total_changes)
-        temp = 'Success!'
+        c.execute("DELETE FROM MAIN WHERE CHAT_ID=? AND TIME=(SELECT MIN(TIME) FROM MAIN WHERE CHAT_ID=? AND NAME=?)", (str(chat_id), str(chat_id), str(req)))
+        temp = f'Success! I delete counting for {req}.'
     except:
         warn(f'{sys.exc_info()}')
         temp = 'Nothing to delete'
     send_msg(chat_id=chat_id, text=temp)
+    connect.commit()
     connect.close()
 
 
