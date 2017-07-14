@@ -203,9 +203,14 @@ def counting_reset(chat_id, req):
 def counting_delete(chat_id, req):
     connect = sqlite3.connect('precious.db')
     c = connect.cursor()
+    temp = ''
     try:
-        c.execute("DELETE FROM MAIN WHERE CHAT_ID=? AND TIME=(SELECT MIN(TIME) FROM MAIN WHERE CHAT_ID=? AND NAME=?)", (str(chat_id), str(chat_id), str(req)))
-        temp = f'Success! I delete counting for {req}.'
+        result = c.execute("SELECT TIME FROM MAIN WHERE CHAT_ID=? AND ID=(SELECT MIN(ID) FROM MAIN WHERE CHAT_ID=? AND NAME=?)", (str(chat_id), str(chat_id), str(req)))
+        date = c.fetchone()
+        c.execute("DELETE FROM MAIN WHERE CHAT_ID=? AND ID=(SELECT MIN(ID) FROM MAIN WHERE CHAT_ID=? AND NAME=?)", (str(chat_id), str(chat_id), str(req)))        
+        date = round(int(time.time() - int(date[0])) / 86400)
+        date = '️⃣'.join(tuple(str(date)))
+        temp = f'I delete counting for {req} since {date}️⃣ days!'
     except:
         warn(f'{sys.exc_info()}')
         temp = 'Nothing to delete'
