@@ -171,17 +171,22 @@ def counting_show(chat_id, req):
     temp = ''
     try:
         if req == 'all':
-            result = c.execute("SELECT * FROM MAIN WHERE CHAT_ID=?", (str(chat_id), ))
+            c.execute("SELECT * FROM MAIN WHERE CHAT_ID=?", (str(chat_id), ))
+            result = c.fetchall()
+            for row in result:
+                date = round(int(time.time() - int(row[3])) / 86400)
+                date = '️⃣'.join(tuple(str(date)))
+                temp += f'Day\'s since {row[2]}: {date}️⃣\n'
         else:
-            result = c.execute("SELECT * FROM MAIN WHERE CHAT_ID=? AND NAME=?", (str(chat_id), str(req)))
-        for row in result:
-            date = round(int(time.time() - int(row[3])) / 86400)
+            c.execute("SELECT * FROM MAIN WHERE CHAT_ID=? AND NAME=?", (str(chat_id), str(req)))
+            result = c.fetchone()
+            date = round(int(time.time() - int(result[3])) / 86400)
             date = '️⃣'.join(tuple(str(date)))
-            temp += f'Day\'s since {row[2]}: {date}️⃣\n'
+            temp += f'Day\'s since {result[2]}: {date}️⃣\n'
     except:
         warn(f'{sys.exc_info()}')
         temp = 'Nothing to show'
-    send_msg(chat_id=chat_id,text=temp)
+    send_msg(chat_id=chat_id, text=temp)
     connect.close()
 
 
@@ -191,12 +196,15 @@ def counting_reset(chat_id, req):
     temp = ''
     try:
         c.execute("UPDATE MAIN SET TIME=? WHERE CHAT_ID=? AND NAME=?", (int(time.time()), str(chat_id), str(req)))
-        connect.commit()
+        result = c.fetchall()
+        if connect.total_changes is 0:
+            raise Exception('Nothing to reset')
         temp = f'Resetting {connect.total_changes} records'
+        connect.commit()
     except:
         warn(f'{sys.exc_info()}')
-        temp = 'Nothing to update'
-    send_msg(chat_id=chat_id,text=temp)
+        temp = 'Nothing to reset'
+    send_msg(chat_id=chat_id, text=temp)
     connect.close()
 
 
@@ -207,7 +215,7 @@ def counting_delete(chat_id, req):
     try:
         result = c.execute("SELECT TIME FROM MAIN WHERE CHAT_ID=? AND ID=(SELECT MIN(ID) FROM MAIN WHERE CHAT_ID=? AND NAME=?)", (str(chat_id), str(chat_id), str(req)))
         date = c.fetchone()
-        c.execute("DELETE FROM MAIN WHERE CHAT_ID=? AND ID=(SELECT MIN(ID) FROM MAIN WHERE CHAT_ID=? AND NAME=?)", (str(chat_id), str(chat_id), str(req)))        
+        c.execute("DELETE FROM MAIN WHERE CHAT_ID=? AND ID=(SELECT MIN(ID) FROM MAIN WHERE CHAT_ID=? AND NAME=?)", (str(chat_id), str(chat_id), str(req)))
         date = round(int(time.time() - int(date[0])) / 86400)
         date = '️⃣'.join(tuple(str(date)))
         temp = f'I delete counting for {req} since {date}️⃣ days!'
