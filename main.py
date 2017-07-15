@@ -4,6 +4,7 @@ Can count days since smth, for example - last jewish tricks
 '''
 import datetime
 import json
+import re
 import requests
 import sqlite3
 import sys
@@ -109,20 +110,17 @@ def handle_msg(msg, last_update):
         except:
             msg_text = '...'
             print(msg_header)
-
     # shutdown button
     if msg_text.lower() == '/bot_stop' and msg_chat_id == config.owner_id and I.LAST_ID == msg_id:
         send_sticker(chat_id=msg_chat_id, file_id='CAADAgADwwQAAvoLtgiyQa_zvBHWHwI')
         get_updates(msg_id)
         return False
     # start counting
-    elif msg_text.lower()[:31] == '!bot start counting days since ' and I.LAST_ID == msg_id:
-        if len(msg_text[31:]) < 4000:
-            counting_start(chat_id=msg_chat_id, msg=msg_text[4:])
-        elif len(msg_text[31:]) > 4000:
-            send_msg(chat_id=msg_chat_id, text='Max lengt of message can be only 4k characters')
+    elif msg_text.lower()[:20] == '!bot start counting ' and I.LAST_ID == msg_id:
+        if len(msg_text[20:]) > 1000:
+            send_msg(chat_id=msg_chat_id, text='Message is too long!')
         else:
-            send_msg(chat_id=msg_chat_id, text='Your words are as empty as your soul!')
+            counting_start(chat_id=msg_chat_id, msg=msg_text)
     # show counting
     elif msg_text.lower()[:10] == '!bot show ':
         counting_show(chat_id=msg_chat_id, req=msg_text[10:])
@@ -156,17 +154,44 @@ def send_sticker(file_id, chat_id=config.owner_id):
 def counting_start(chat_id, msg):
     connect = sqlite3.connect('precious.db')
     c = connect.cursor()
-    while 1:
+    name = ''
+    date = ''
+    if re.search(r'^!bot start counting for (.*)', msg):
+        name = msg[24:]
+        date = int(time.mktime(datetime.datetime.strptime(time.strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))
+    elif re.search(r'^!bot start counting since (now|today|tomorrow|yesterday) for (.*)', msg):
+        res = re.match(r'^!bot start counting since (now|today|tomorrow|yesterday) for (.*)', msg)
+        name = res.group(2)
+        date = int(time.mktime(datetime.datetime.strptime(time.strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))
+        if res.group(1) == 'now' or res.group(1) == 'today':
+            date = date
+        elif res.group(1) == 'tomorrow':
+            date = date + 86400
+        elif res.group(1) == 'yesterday':
+            date = date - 86400
+    elif re.search(r'!bot start counting since ([\d]{2}[.][\d]{2}[.][\d]{4}) for (.*)', msg):
+        res = re.match(r'!bot start counting since ([\d]{2}[.][\d]{2}[.][\d]{4}) for (.*)', msg)
+        name = res.group(2)
         try:
-            c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (?, ?, ?, ?)", (I.LAST_PRECIOUS, chat_id, msg[27:], int(time.time())))
-            break
-        except sqlite3.IntegrityError:
-            I.LAST_PRECIOUS += 1
+            date = int(time.mktime(datetime.datetime.strptime(res.group(1), "%d.%m.%Y").timetuple()))
+        except Exception as e:
+            date = 0
+            msg += '. But honestly i can\'t count earlier than 01.01.1970.'
+    if date != '' and name != '':
+        while 1:
+            try:
+                c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (?, ?, ?, ?)", (I.LAST_PRECIOUS, chat_id, name, date))
+                break
+            except sqlite3.IntegrityError:
+                I.LAST_PRECIOUS += 1
+        send_msg(chat_id=chat_id, text=f'I {msg[5:]}')
+        warn(f'For {chat_id} add {name} since {date}')
+        I.LAST_PRECIOUS += 1
+    else:
+        send_msg(chat_id=chat_id, text=f'Wrong command')
+        warn(f'Failed to add: {msg} for {chat_id}')
     connect.commit()
     connect.close()
-    send_msg(chat_id=chat_id, text=f'I {msg}')
-    I.LAST_PRECIOUS += 1
-    warn(f'Add {msg} for {chat_id}')
     return
 
 
@@ -179,9 +204,12 @@ def counting_show(chat_id, req):
             c.execute("SELECT * FROM MAIN WHERE CHAT_ID=?", (str(chat_id), ))
             result = c.fetchall()
             for row in result:
-                date = round(int(time.time() - int(row[3])) / 86400)
+                if int(time.time()) < int(row[3]):
+                    date = 0  # Don't count for the future
+                else:
+                    date = round(int(time.time() - int(row[3])) / 86400)
                 date = '️⃣'.join(tuple(str(date)))
-                if len(temp + row[2]) < 4000:
+                if len(temp + row[2]) < 4050:
                     temp += f'Day\'s since {row[2]}: {date}️⃣\n'
                 else:
                     send_msg(chat_id=chat_id, text=temp)
@@ -240,11 +268,12 @@ def counting_delete(chat_id, req):
 def send_help(chat_id):
     text = '''
 *"Days since"* commands:
-`!bot start counting days since <smth>` - start counting unique event for user|group
-`!bot show <smth>` - show how many days sice event _<smth>_
+`!bot start counting for <smth>` - start unique counting for user|group with name `<smth>`
+`!bot start counting since <dd.mm.yyy> for <smth>` - start unique counting for user|group with name `<smth>` since `<dd.mm.yyy>`
+`!bot show <smth>` - show how many days sice event `<smth>`
 `!bot show all` - show all events for user|group
-`!bot reset <smth>` - reset counter for event _<smth>_
-`!bot delete <smth>` - delete counter for event _<smth>_
+`!bot reset <smth>` - reset counter for event `<smth>`
+`!bot delete <smth>` - delete counter for event `<smth>`
 `!bot help` - idk
 '''
     req = f'{I.HOST}/sendMessage?chat_id={chat_id}&text={text}&parse_mode=markdown'
