@@ -117,7 +117,12 @@ def handle_msg(msg, last_update):
         return False
     # start counting
     elif msg_text.lower()[:31] == '!bot start counting days since ' and I.LAST_ID == msg_id:
-        counting_start(chat_id=msg_chat_id, msg=msg_text[4:])
+        if len(msg_text[31:]) < 4000:
+            counting_start(chat_id=msg_chat_id, msg=msg_text[4:])
+        elif len(msg_text[31:]) > 4000:
+            send_msg(chat_id=msg_chat_id, text='Max lengt of message can be only 4k characters')
+        else:
+            send_msg(chat_id=msg_chat_id, text='Your words are as empty as your soul!')
     # show counting
     elif msg_text.lower()[:10] == '!bot show ':
         counting_show(chat_id=msg_chat_id, req=msg_text[10:])
@@ -176,7 +181,12 @@ def counting_show(chat_id, req):
             for row in result:
                 date = round(int(time.time() - int(row[3])) / 86400)
                 date = '️⃣'.join(tuple(str(date)))
-                temp += f'Day\'s since {row[2]}: {date}️⃣\n'
+                if len(temp + row[2]) < 4000:
+                    temp += f'Day\'s since {row[2]}: {date}️⃣\n'
+                else:
+                    send_msg(chat_id=chat_id, text=temp)
+                    temp = ''
+                    temp += f'Day\'s since {row[2]}: {date}️⃣\n'
         else:
             c.execute("SELECT * FROM MAIN WHERE CHAT_ID=? AND NAME=?", (str(chat_id), str(req)))
             result = c.fetchone()
