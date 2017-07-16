@@ -142,7 +142,7 @@ def handle_msg(msg, last_update):
 
 def send_msg(chat_id=config.owner_id, text='Good day, sir!'):
     text = urllib.parse.quote_plus(text)
-    req = f'{I.HOST}/sendMessage?chat_id={chat_id}&text={text}'
+    req = f'{I.HOST}/sendMessage?chat_id={chat_id}&text={text}&parse_mode=markdown'
     return action(req)
 
 
@@ -276,8 +276,8 @@ def send_help(chat_id):
 `!bot delete <smth>` - delete counter for event `<smth>`
 `!bot help` - idk
 '''
-    req = f'{I.HOST}/sendMessage?chat_id={chat_id}&text={text}&parse_mode=markdown'
-    return action(req)
+    send_msg(chat_id=chat_id, text=text)
+    return
 
 
 def warn(msg):
