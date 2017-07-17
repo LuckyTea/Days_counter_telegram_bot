@@ -1,0 +1,21 @@
+language: python
+python:
+  - "3.6"
+  - "3.6-dev"
+  - "3.7-dev"
+  - "nightly"
+
+install:
+  - pip install coverage
+  - pip install codecov
+
+script:
+  - coverage run test.py
+
+after_success:
+  - codecov
+
+notifications:
+  email:
+    on_success: never # default: change
+    on_failure: always # default: always

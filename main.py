@@ -15,7 +15,7 @@ import config
 
 
 class Init():
-    def init(self):
+    def __init__(self):
         self.HOST = f'https://api.telegram.org/bot{config.token}'
         self.LAST_ID = None
         self.LAST_PRECIOUS = None
@@ -42,20 +42,23 @@ def main():
 
 
 def init_db():
-    connect = sqlite3.connect(I.DB_NAME)
-    c = connect.cursor()
     try:
-        c.execute('''CREATE TABLE MAIN
-                 (ID      INT PRIMARY KEY   NOT NULL,
-                 CHAT_ID              INT   NOT NULL,
-                 NAME                TEXT   NOT NULL,
-                 TIME                 INT   NOT NULL);''')
-    except sqlite3.OperationalError:
-        ...
-    c.execute('SELECT COUNT(*) FROM MAIN')
-    I.LAST_PRECIOUS = int(c.fetchone()[0])
-    connect.close()
-    return 1
+        connect = sqlite3.connect(I.DB_NAME)
+        c = connect.cursor()
+        try:
+            c.execute('''CREATE TABLE MAIN
+                     (ID      INT PRIMARY KEY   NOT NULL,
+                     CHAT_ID              INT   NOT NULL,
+                     NAME                TEXT   NOT NULL,
+                     TIME                 INT   NOT NULL);''')
+        except sqlite3.OperationalError:
+            ...
+        c.execute('SELECT COUNT(*) FROM MAIN')
+        I.LAST_PRECIOUS = int(c.fetchone()[0])
+        connect.close()
+        return 1
+    except:
+        return 0
 
 
 def action(req):
@@ -292,5 +295,6 @@ def send_help(chat_id, msg_date):
 
 if __name__ == '__main__':
     I = Init()
-    I.init()
     main()
+else:
+    I = Init()
