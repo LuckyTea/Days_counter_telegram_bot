@@ -17,6 +17,12 @@ class init_db(unittest.TestCase):
         self.assertEqual(m.init_db(), 0)
 
 
+class action(unittest.TestCase):
+    def test_action(self):
+        req = 'https://api.telegram.org/bot'
+        self.assertEqual(m.action(req), '{"ok":false,"error_code":404,"description":"Not Found"}')
+
+
 class echo(unittest.TestCase):
     def test_echo_standart(self):
         date = datetime.fromtimestamp(1000000).strftime('%d.%m.%Y - %H:%M:%S')
