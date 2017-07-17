@@ -189,11 +189,11 @@ def counting_start(chat_id, msg_date, msg):
             except sqlite3.IntegrityError:
                 I.LAST_PRECIOUS += 1
         send_msg(chat_id=chat_id, text=f'I {msg[5:]}')
-        warn(f'For {chat_id} add {name} since {date}')
+        warn(f'\tFor {chat_id} add {name} since {date}')
         I.LAST_PRECIOUS += 1
     else:
         send_msg(chat_id=chat_id, text=f'Wrong command')
-        warn(f'Failed to add: {msg} for {chat_id}')
+        warn(f'\tFailed to add: {msg} for {chat_id}')
     connect.commit()
     connect.close()
 
@@ -210,9 +210,9 @@ def counting_show(chat_id, msg_date, req):
                 if msg_date < int(row[3]):
                     date = 0  # Don't count for the future
                 else:
-                    date = round(int(msg_date - int(row[3])) / 86400)
+                    date = int(msg_date - int(row[3])) // 86400
                 date = '️⃣'.join(tuple(str(date)))
-                if len(temp + row[2]) < 4050:
+                if len(temp + row[2]) < 4000:
                     temp += f'Day\'s since {row[2]}: {date}️⃣\n'
                 else:
                     send_msg(chat_id=chat_id, text=temp)
@@ -221,7 +221,7 @@ def counting_show(chat_id, msg_date, req):
         else:
             c.execute("SELECT * FROM MAIN WHERE CHAT_ID=? AND NAME=?", (str(chat_id), str(req)))
             result = c.fetchone()
-            date = round(int(msg_date - int(result[3])) / 86400)
+            date = int(msg_date - int(result[3])) // 86400
             date = '️⃣'.join(tuple(str(date)))
             temp += f'Day\'s since {result[2]}: {date}️⃣\n'
     except:
