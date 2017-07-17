@@ -19,6 +19,7 @@ class Init():
         self.HOST = f'https://api.telegram.org/bot{config.token}'
         self.LAST_ID = None
         self.LAST_PRECIOUS = None
+        self.DB_NAME = config.db_name
 
 
 def main():
@@ -41,9 +42,8 @@ def main():
 
 
 def init_db():
-    connect = sqlite3.connect('precious.db')
+    connect = sqlite3.connect(I.DB_NAME)
     c = connect.cursor()
-    # c.execute("""drop table if exists MAIN""")
     try:
         c.execute('''CREATE TABLE MAIN
                  (ID      INT PRIMARY KEY   NOT NULL,
@@ -52,7 +52,7 @@ def init_db():
                  TIME                 INT   NOT NULL);''')
     except sqlite3.OperationalError:
         ...
-    c.execute('''SELECT COUNT(*) FROM MAIN''')
+    c.execute('SELECT COUNT(*) FROM MAIN')
     I.LAST_PRECIOUS = int(c.fetchone()[0])
     connect.close()
     return 1
@@ -145,6 +145,7 @@ def echo(id='...', date=time.time(), user='...', chat='...', msg='...', warn=Fal
     if warn:
         temp = (f'\x1b[0;31;40m{temp}\x1b[0m')
     print(temp)
+    return temp
 
 
 def send_msg(chat_id=config.owner_id, msg='Good day, sir!'):
@@ -159,7 +160,7 @@ def send_sticker(file_id, chat_id=config.owner_id):
 
 
 def counting_start(chat_id, msg_date, msg):
-    connect = sqlite3.connect('precious.db')
+    connect = sqlite3.connect(I.DB_NAME)
     c = connect.cursor()
     name = ''
     date = ''
@@ -202,7 +203,7 @@ def counting_start(chat_id, msg_date, msg):
 
 
 def counting_show(chat_id, msg_date, msg):
-    connect = sqlite3.connect('precious.db')
+    connect = sqlite3.connect(I.DB_NAME)
     c = connect.cursor()
     temp = ''
     try:
@@ -236,7 +237,7 @@ def counting_show(chat_id, msg_date, msg):
 
 
 def counting_reset(chat_id, msg_date, msg):
-    connect = sqlite3.connect('precious.db')
+    connect = sqlite3.connect(I.DB_NAME)
     c = connect.cursor()
     temp = ''
     try:
@@ -255,7 +256,7 @@ def counting_reset(chat_id, msg_date, msg):
 
 
 def counting_delete(chat_id, msg_date, msg):
-    connect = sqlite3.connect('precious.db')
+    connect = sqlite3.connect(I.DB_NAME)
     c = connect.cursor()
     temp = ''
     try:
@@ -271,7 +272,7 @@ def counting_delete(chat_id, msg_date, msg):
     connect.commit()
     connect.close()
     send_msg(chat_id=chat_id, msg=temp)
-    echo(date=msg_date, chat=chat_id, msg=f'!bot delete {msg}, warn=True)
+    echo(date=msg_date, chat=chat_id, msg=f'!bot delete {msg}', warn=True)
 
 
 def send_help(chat_id, msg_date):
