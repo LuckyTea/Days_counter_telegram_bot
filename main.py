@@ -2,7 +2,7 @@
 Days since telegram bot
 Can count days since smth, for example - last jewish tricks
 '''
-import datetime
+from datetime import datetime
 import json
 import re
 import requests
@@ -120,7 +120,7 @@ def handle_msg(msg, last_update):
         if len(msg_text[20:]) > 1000:
             send_msg(chat_id=msg_chat_id, text='Message is too long!')
         else:
-            counting_start(chat_id=msg_chat_id, msg=msg_text)
+            counting_start(chat_id=msg_chat_id, msg_date=msg_date, msg=msg_text)
     # show counting
     elif msg_text.lower()[:10] == '!bot show ':
         counting_show(chat_id=msg_chat_id, msg_date=msg_date, req=msg_text[10:])
@@ -155,18 +155,18 @@ def send_sticker(file_id, chat_id=config.owner_id):
     return action(req)
 
 
-def counting_start(chat_id, msg):
+def counting_start(chat_id, msg_date, msg):
     connect = sqlite3.connect('precious.db')
     c = connect.cursor()
     name = ''
     date = ''
     if re.search(r'^!bot start counting for (.*)', msg):
         name = msg[24:]
-        date = int(time.mktime(datetime.datetime.strptime(time.strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))
+        date = int(time.mktime(datetime.strptime(time.strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))
     elif re.search(r'^!bot start counting since (now|today|tomorrow|yesterday) for (.*)', msg):
         res = re.match(r'^!bot start counting since (now|today|tomorrow|yesterday) for (.*)', msg)
         name = res.group(2)
-        date = int(time.mktime(datetime.datetime.strptime(time.strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))
+        date = int(time.mktime(datetime.strptime(time.strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))
         if res.group(1) == 'now' or res.group(1) == 'today':
             date = date
         elif res.group(1) == 'tomorrow':
@@ -177,7 +177,7 @@ def counting_start(chat_id, msg):
         res = re.match(r'!bot start counting since ([\d]{2}[.][\d]{2}[.][\d]{4}) for (.*)', msg)
         name = res.group(2)
         try:
-            date = int(time.mktime(datetime.datetime.strptime(res.group(1), "%d.%m.%Y").timetuple()))
+            date = int(time.mktime(datetime.strptime(res.group(1), "%d.%m.%Y").timetuple()))
         except Exception as e:
             date = 0
             msg += '. But honestly i can\'t count earlier than 01.01.1970.'
