@@ -93,7 +93,7 @@ def handle_msg(msg, last_update):
     except:
         msg_header = msg['result'][last_update]['edited_message']
     # handling message date time
-    msg_time = time.time()
+    msg_date = msg_header['date']
     # handling message author
     msg_user = msg_header['from']['username']
     # handling message chat id
@@ -109,7 +109,7 @@ def handle_msg(msg, last_update):
             msg_text = msg_header['sticker']['emoji']
         except:
             msg_text = '...'
-            print(msg_header)
+            warn(f'!!!Some stange message: {msg_header}')
     # shutdown button
     if msg_text.lower() == '/bot_stop' and msg_chat_id == config.owner_id and I.LAST_ID == msg_id:
         send_sticker(chat_id=msg_chat_id, file_id='CAADAgADwwQAAvoLtgiyQa_zvBHWHwI')
@@ -123,21 +123,25 @@ def handle_msg(msg, last_update):
             counting_start(chat_id=msg_chat_id, msg=msg_text)
     # show counting
     elif msg_text.lower()[:10] == '!bot show ':
-        counting_show(chat_id=msg_chat_id, req=msg_text[10:])
+        counting_show(chat_id=msg_chat_id, msg_date=msg_date, req=msg_text[10:])
     # reset counting
     elif msg_text.lower()[:11] == '!bot reset ':
-        counting_reset(chat_id=msg_chat_id, req=msg_text[11:])
+        counting_reset(chat_id=msg_chat_id, msg_date=msg_date, req=msg_text[11:])
     # delete counting
     elif msg_text.lower()[:12] == '!bot delete ':
-        counting_delete(chat_id=msg_chat_id, req=msg_text[12:])
+        counting_delete(chat_id=msg_chat_id, msg_date=msg_date, req=msg_text[12:])
     # show help
     elif msg_text.lower()[:9] == '!bot help' and len(msg_text) == 9:
         send_help(chat_id=msg_chat_id)
     # echo
     elif I.LAST_ID == msg_id:
-        print(f'At {msg_time} user {msg_user} from {msg_chat_id} post message #{msg_id}:\n\t{msg_text}\n{msg_header}\n')
+        echo(id=msg_id, date=msg_date, user=msg_user, chat=msg_chat_id, text=msg_text)
     I.LAST_ID = msg_id + 1
     return True
+
+
+def echo(id='...', date='...', user='...', chat='...', text='...'):
+    print(f'At {date} user {user} from {chat} post message #{id}:\n{text}\n{"="*70}')
 
 
 def send_msg(chat_id=config.owner_id, text='Good day, sir!'):
@@ -192,10 +196,9 @@ def counting_start(chat_id, msg):
         warn(f'Failed to add: {msg} for {chat_id}')
     connect.commit()
     connect.close()
-    return
 
 
-def counting_show(chat_id, req):
+def counting_show(chat_id, msg_date, req):
     connect = sqlite3.connect('precious.db')
     c = connect.cursor()
     temp = ''
@@ -204,10 +207,10 @@ def counting_show(chat_id, req):
             c.execute("SELECT * FROM MAIN WHERE CHAT_ID=?", (str(chat_id), ))
             result = c.fetchall()
             for row in result:
-                if int(time.time()) < int(row[3]):
+                if msg_date < int(row[3]):
                     date = 0  # Don't count for the future
                 else:
-                    date = round(int(time.time() - int(row[3])) / 86400)
+                    date = round(int(msg_date - int(row[3])) / 86400)
                 date = '️⃣'.join(tuple(str(date)))
                 if len(temp + row[2]) < 4050:
                     temp += f'Day\'s since {row[2]}: {date}️⃣\n'
@@ -218,17 +221,18 @@ def counting_show(chat_id, req):
         else:
             c.execute("SELECT * FROM MAIN WHERE CHAT_ID=? AND NAME=?", (str(chat_id), str(req)))
             result = c.fetchone()
-            date = round(int(time.time() - int(result[3])) / 86400)
+            date = round(int(msg_date - int(result[3])) / 86400)
             date = '️⃣'.join(tuple(str(date)))
             temp += f'Day\'s since {result[2]}: {date}️⃣\n'
     except:
         warn(f'{sys.exc_info()}')
         temp = 'Nothing to show'
-    send_msg(chat_id=chat_id, text=temp)
     connect.close()
+    send_msg(chat_id=chat_id, text=temp)
+    warn(f'\tFor {chat_id} show {req} at {msg_date}')
 
 
-def counting_reset(chat_id, req):
+def counting_reset(chat_id, msg_date, req):
     connect = sqlite3.connect('precious.db')
     c = connect.cursor()
     temp = ''
@@ -242,11 +246,12 @@ def counting_reset(chat_id, req):
     except:
         warn(f'{sys.exc_info()}')
         temp = 'Nothing to reset'
-    send_msg(chat_id=chat_id, text=temp)
     connect.close()
+    send_msg(chat_id=chat_id, text=temp)
+    warn(f'\tFor {chat_id} show {req} at {msg_date}')
 
 
-def counting_delete(chat_id, req):
+def counting_delete(chat_id, msg_date, req):
     connect = sqlite3.connect('precious.db')
     c = connect.cursor()
     temp = ''
@@ -260,9 +265,10 @@ def counting_delete(chat_id, req):
     except:
         warn(f'{sys.exc_info()}')
         temp = 'Nothing to delete'
-    send_msg(chat_id=chat_id, text=temp)
     connect.commit()
     connect.close()
+    send_msg(chat_id=chat_id, text=temp)
+    warn(f'\tFor {chat_id} show {req} at {msg_date}')
 
 
 def send_help(chat_id):
@@ -281,7 +287,7 @@ def send_help(chat_id):
 
 
 def warn(msg):
-    print(f'\x1b[0;31;40m{msg}\x1b[0m')
+    print(f'\x1b[0;31;40m{msg}\x1b[0m\n{"="*70}')
 
 if __name__ == '__main__':
     I = Init()
