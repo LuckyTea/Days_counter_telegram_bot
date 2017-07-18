@@ -56,6 +56,7 @@ def init_db():
         connect.close()
         return 1
     except:
+        echo(msg=f'init_db() exit code 0 {sys.exc_info()}', warn=True)
         return 0
 
 

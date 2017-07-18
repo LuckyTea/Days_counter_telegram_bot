@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
 import os
+import sqlite3
 import time
 import unittest
 from unittest.mock import patch
@@ -8,14 +9,39 @@ import main as m
 
 
 class init_db(unittest.TestCase):
+    def setUp(self):
+        m.I.__init__()
+
     def test_init_db_succ(self):
         m.I.DB_NAME = 'test_case.db'
         self.assertEqual(m.init_db(), 1)
-        os.remove('test_case.db')
 
-    def test_init_db_fail(self):
-        m.I.DB_NAME = None
+    def test_init_db_table_already_exist(self):
+        m.I.DB_NAME = 'test_case.db'
+        connect = sqlite3.connect(m.I.DB_NAME)
+        c = connect.cursor()
+        c.execute('''CREATE TABLE MAIN
+                 (ID      INT PRIMARY KEY   NOT NULL,
+                 CHAT_ID              INT   NOT NULL,
+                 NAME                TEXT   NOT NULL,
+                 TIME                 INT   NOT NULL);''')
+        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (1, 2, '3', 4)")
+        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (5, 6, '7', 8)")
+        connect.commit()
+        connect.close()
+        self.assertEqual(m.init_db(), 1)
+        self.assertEqual(m.I.LAST_PRECIOUS, 2)
+
+    def test_init_db_cant_create(self):
+        m.I.DB_NAME = '//'
         self.assertEqual(m.init_db(), 0)
+        self.assertEqual(m.I.LAST_PRECIOUS, 0)
+
+    def tearDown(self):
+        try:
+            os.remove('test_case.db')
+        except FileNotFoundError:
+            ...
 
 
 class action(unittest.TestCase):
