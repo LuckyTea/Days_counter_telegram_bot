@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 import os
 import time
 import unittest
@@ -21,6 +22,13 @@ class action(unittest.TestCase):
     def test_action(self):
         req = 'https://api.telegram.org/bot'
         self.assertEqual(m.action(req), '{"ok":false,"error_code":404,"description":"Not Found"}')
+
+
+class get_json(unittest.TestCase):
+    @patch('__main__.m.action', return_value='{"status":"ok"}')
+    def test_get_json(self, action):
+        req = None
+        self.assertEqual(m.get_json(req), json.loads('{"status":"ok"}'))
 
 
 class echo(unittest.TestCase):
