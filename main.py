@@ -12,8 +12,6 @@ import sys
 import time
 import urllib
 
-import config
-
 
 class Init():
     def __init__(self):
@@ -296,6 +294,7 @@ def send_help(chat_id, msg_date):
 
 
 if __name__ == '__main__':
+    import config
     I = Init()
     main()
 else:
