@@ -18,7 +18,7 @@ class Init():
         import config
         self.HOST = f'https://api.telegram.org/bot{config.token}'
         self.LAST_ID = None
-        self.LAST_PRECIOUS = None
+        self.LAST_PRECIOUS = 0
         self.OWNER_ID = config.owner_id
         self.DB_NAME = config.db_name
 
@@ -51,9 +51,8 @@ def init_db():
                      NAME                TEXT   NOT NULL,
                      TIME                 INT   NOT NULL);''')
         except sqlite3.OperationalError:
-            ...
-        c.execute('SELECT COUNT(*) FROM MAIN')
-        I.LAST_PRECIOUS = int(c.fetchone()[0])
+            c.execute('SELECT COUNT(*) FROM MAIN')
+            I.LAST_PRECIOUS = int(c.fetchone()[0])
         connect.close()
         return 1
     except:
