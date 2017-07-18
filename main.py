@@ -2,6 +2,7 @@
 Days since telegram bot
 Can count days since smth, for example - last jewish tricks
 '''
+
 from datetime import datetime
 import json
 import re
@@ -11,12 +12,15 @@ import sys
 import time
 import urllib
 
+import config
+
 
 class Init():
     def __init__(self):
         self.HOST = f'https://api.telegram.org/bot{config.token}'
         self.LAST_ID = None
         self.LAST_PRECIOUS = None
+        self.OWNER_ID = config.owner_id
         self.DB_NAME = config.db_name
 
 
@@ -111,7 +115,7 @@ def handle_msg(msg, last_update):
             msg_text = '...'
             echo(msg=f'!!!Some stange message: {msg_header}', warn=True)
     # shutdown button
-    if msg_text.lower() == '/bot_stop' and msg_chat_id == config.owner_id and I.LAST_ID == msg_id:
+    if msg_text.lower() == '/bot_stop' and msg_chat_id == I.OWNER_ID and I.LAST_ID == msg_id:
         send_sticker(chat_id=msg_chat_id, file_id='CAADAgADwwQAAvoLtgiyQa_zvBHWHwI')
         get_updates(msg_id)
         return False
@@ -149,13 +153,13 @@ def echo(id='...', date=time.time(), user='...', chat='...', msg='...', warn=Fal
     return temp
 
 
-def send_msg(chat_id=config.owner_id, msg='Good day, sir!'):
+def send_msg(chat_id, msg='Good day, sir!'):
     msg = urllib.parse.quote_plus(msg)
     req = f'{I.HOST}/sendMessage?chat_id={chat_id}&text={msg}&parse_mode=markdown'
     return action(req)
 
 
-def send_sticker(file_id, chat_id=config.owner_id):
+def send_sticker(chat_id, file_id):
     req = f'{I.HOST}/sendSticker?chat_id={chat_id}&sticker={file_id}'
     return action(req)
 
@@ -292,7 +296,6 @@ def send_help(chat_id, msg_date):
 
 
 if __name__ == '__main__':
-    import config
     I = Init()
     main()
 else:
