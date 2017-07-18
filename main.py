@@ -15,6 +15,7 @@ import urllib
 
 class Init():
     def __init__(self):
+        import config
         self.HOST = f'https://api.telegram.org/bot{config.token}'
         self.LAST_ID = None
         self.LAST_PRECIOUS = None
@@ -294,7 +295,6 @@ def send_help(chat_id, msg_date):
 
 
 if __name__ == '__main__':
-    import config
     I = Init()
     main()
 else:
