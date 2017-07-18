@@ -34,13 +34,13 @@ class get_json(unittest.TestCase):
 class get_status(unittest.TestCase):
     @patch('__main__.m.get_json', return_value=json.loads('{"ok":"true"}'))
     def test_get_status_up(self, get_json):
-        m.I.HSOT = None
-        self.assertEqual(m.get_status(), "true")
+        req = None
+        self.assertEqual(m.get_status(req), "true")
 
     @patch('__main__.m.get_json', return_value=json.loads('{"ok":"false"}'))
     def test_get_status_down(self, get_json):
-        m.I.HSOT = None
-        self.assertEqual(m.get_status(), "false")
+        req = None
+        self.assertEqual(m.get_status(req), "false")
 
 
 class echo(unittest.TestCase):

@@ -25,12 +25,10 @@ class Init():
 
 def main():
     echo(msg='Good day, sir!', warn=True)
-    if not get_status():
-        echo(msg='Bot is down', warn=True)
-        return
+    if not get_status(req=f'{I.HOST}/getMe'):
+        return echo(msg='Bot is down', warn=True)
     if not init_db():
-        echo(msg='Can\'t initialize DB', warn=True)
-        return
+        return echo(msg='Can\'t initialize DB', warn=True)
     echo(msg=f'Now in DB {I.LAST_PRECIOUS} records\nBot work well. Getting messages...', warn=True)
     run = 1
     while run is 1:
@@ -74,8 +72,7 @@ def get_json(req):
     return content
 
 
-def get_status():
-    req = f'{I.HOST}/getMe'
+def get_status(req):
     response = get_json(req)
     return response["ok"]
 
