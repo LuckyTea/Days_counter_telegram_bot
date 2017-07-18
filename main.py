@@ -264,7 +264,7 @@ def counting_delete(chat_id, msg_date, msg):
         result = c.execute("SELECT TIME FROM MAIN WHERE CHAT_ID=? AND ID=(SELECT MIN(ID) FROM MAIN WHERE CHAT_ID=? AND NAME=?)", (str(chat_id), str(chat_id), str(msg)))
         date = c.fetchone()
         c.execute("DELETE FROM MAIN WHERE CHAT_ID=? AND ID=(SELECT MIN(ID) FROM MAIN WHERE CHAT_ID=? AND NAME=?)", (str(chat_id), str(chat_id), str(msg)))
-        date = round(int(time.time() - int(date[0])) / 86400)
+        date = round(int(time.time() - int(date[0])) // 86400)
         date = '️⃣'.join(tuple(str(date)))
         temp = f'I delete counting for {msg} since {date}️⃣ days!'
     except:
