@@ -25,10 +25,22 @@ class action(unittest.TestCase):
 
 
 class get_json(unittest.TestCase):
-    @patch('__main__.m.action', return_value='{"status":"ok"}')
+    @patch('__main__.m.action', return_value='{"ok":"true"}')
     def test_get_json(self, action):
         req = None
-        self.assertEqual(m.get_json(req), json.loads('{"status":"ok"}'))
+        self.assertEqual(m.get_json(req), json.loads('{"ok":"true"}'))
+
+
+class get_status(unittest.TestCase):
+    @patch('__main__.m.get_json', return_value=json.loads('{"ok":"true"}'))
+    def test_get_status_up(self, get_json):
+        m.I.HSOT = None
+        self.assertEqual(m.get_status(), "true")
+
+    @patch('__main__.m.get_json', return_value=json.loads('{"ok":"false"}'))
+    def test_get_status_down(self, get_json):
+        m.I.HSOT = None
+        self.assertEqual(m.get_status(), "false")
 
 
 class echo(unittest.TestCase):

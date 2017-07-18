@@ -25,7 +25,7 @@ class Init():
 
 def main():
     echo(msg='Good day, sir!', warn=True)
-    if not get_info():
+    if not get_status():
         echo(msg='Bot is down', warn=True)
         return
     if not init_db():
@@ -74,7 +74,7 @@ def get_json(req):
     return content
 
 
-def get_info():
+def get_status():
     req = f'{I.HOST}/getMe'
     response = get_json(req)
     return response["ok"]
