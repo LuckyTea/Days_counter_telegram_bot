@@ -11,13 +11,12 @@ import main as m
 class init_db(unittest.TestCase):
     def setUp(self):
         m.I.__init__()
+        m.I.DB_NAME = 'test_case.db'
 
     def test_init_db_succ(self):
-        m.I.DB_NAME = 'test_case.db'
         self.assertEqual(m.init_db(), 1)
 
     def test_init_db_table_already_exist(self):
-        m.I.DB_NAME = 'test_case.db'
         connect = sqlite3.connect(m.I.DB_NAME)
         c = connect.cursor()
         c.execute('''CREATE TABLE MAIN
@@ -25,8 +24,8 @@ class init_db(unittest.TestCase):
                  CHAT_ID              INT   NOT NULL,
                  NAME                TEXT   NOT NULL,
                  TIME                 INT   NOT NULL);''')
-        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (1, 2, '3', 4)")
-        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (5, 6, '7', 8)")
+        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (1, 2, 'Test Value 1', 4)")
+        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (5, 6, 'Test Value 2', 8)")
         connect.commit()
         connect.close()
         self.assertEqual(m.init_db(), 1)
@@ -58,41 +57,40 @@ class get_json(unittest.TestCase):
 
 
 class get_status(unittest.TestCase):
+    def setUp(self):
+        m.req = None
+
     @patch('__main__.m.get_json', return_value=json.loads('{"ok":"true"}'))
     def test_get_status_up(self, get_json):
-        req = None
-        self.assertEqual(m.get_status(req), "true")
+        self.assertEqual(m.get_status(m.req), "true")
 
     @patch('__main__.m.get_json', return_value=json.loads('{"ok":"false"}'))
     def test_get_status_down(self, get_json):
-        req = None
-        self.assertEqual(m.get_status(req), "false")
+        self.assertEqual(m.get_status(m.req), "false")
 
 
 class echo(unittest.TestCase):
+    def setUp(self):
+        m.msg_date = datetime.fromtimestamp(946674000).strftime('%d.%m.%Y - %H:%M:%S')
+        m.date = 946674000
+
     def test_echo_standart(self):
-        msg_date = datetime.fromtimestamp(1000000).strftime('%d.%m.%Y - %H:%M:%S')
-        temp = f'At {msg_date} user ... from ... post message #...:\n...\n{"="*70}'
-        date = 1000000
-        self.assertEqual(m.echo(date=date), temp)
+        temp = f'At {m.msg_date} user ... from ... post message #...:\n...\n{"="*70}'
+        self.assertEqual(m.echo(date=m.date), temp)
 
     def test_echo_system(self):
-        msg_date = datetime.fromtimestamp(1000000).strftime('%d.%m.%Y - %H:%M:%S')
-        temp = (f'\x1b[0;31;40mAt {msg_date} user ... from ... post message #...:\n...\n{"="*70}\x1b[0m')
-        date = 1000000
+        temp = (f'\x1b[0;31;40mAt {m.msg_date} user ... from ... post message #...:\n...\n{"="*70}\x1b[0m')
         warn = True
-        self.assertEqual(m.echo(date=date, warn=warn), temp)
+        self.assertEqual(m.echo(date=m.date, warn=warn), temp)
 
     def test_echo_all(self):
-        msg_date = datetime.fromtimestamp(1000000).strftime('%d.%m.%Y - %H:%M:%S')
-        temp = (f'\x1b[0;31;40mAt {msg_date} user msg_user from chat_id post message #msg_id:\nmsg_text\n{"="*70}\x1b[0m')
+        temp = (f'\x1b[0;31;40mAt {m.msg_date} user msg_user from chat_id post message #msg_id:\nmsg_text\n{"="*70}\x1b[0m')
         id = 'msg_id'
-        date = 1000000
         user = 'msg_user'
         chat = 'chat_id'
         msg = 'msg_text'
         warn = True
-        self.assertEqual(m.echo(id, date, user, chat, msg, warn), temp)
+        self.assertEqual(m.echo(id, m.date, user, chat, msg, warn), temp)
 
 if __name__ == '__main__':
     unittest.main()
