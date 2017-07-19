@@ -86,6 +86,7 @@ def get_updates(offset=None):
 
 
 def handle_msg(msg, last_update):
+    warn = True
     msg_id = msg['result'][last_update]['update_id']
     # handling type of message
     try:
@@ -132,10 +133,11 @@ def handle_msg(msg, last_update):
         counting_delete(chat_id=msg_chat_id, msg_date=msg_date, msg=msg_text[12:])
     # show help
     elif msg_text.lower()[:9] == '!bot help' and len(msg_text) == 9:
-        send_help(chat_id=msg_chat_id, msg_date=msg_date)
-    # echo
-    elif I.LAST_ID == msg_id:
-        echo(id=msg_id, date=msg_date, user=msg_user, chat=msg_chat_id, msg=msg_text)
+        send_help(chat_id=msg_chat_id)
+    else:
+        warn = False
+    echo(id=msg_id, date=msg_date, user=msg_user, chat=msg_chat_id, msg=msg_text, warn=warn)
+    print(msg_header)
     I.LAST_ID = msg_id + 1
     return True
 
@@ -276,7 +278,7 @@ def counting_delete(chat_id, msg_date, msg):
     echo(date=msg_date, chat=chat_id, msg=f'!bot delete {msg}', warn=True)
 
 
-def send_help(chat_id, msg_date):
+def send_help(chat_id):
     text = '''
 *"Days since"* commands:
 `!bot start counting for <smth>` - start unique counting for user|group with name `<smth>`
@@ -288,7 +290,6 @@ def send_help(chat_id, msg_date):
 `!bot help` - idk
 '''
     send_msg(chat_id=chat_id, msg=text)
-    echo(date=msg_date, chat=chat_id, msg='!bot help', warn=True)
 
 
 if __name__ == '__main__':
