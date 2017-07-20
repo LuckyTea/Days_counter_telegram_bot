@@ -207,12 +207,13 @@ def counting_show(chat_id, msg_date, msg):
             if len(result) is 0:
                 raise
             for row in result:
+                print(f'!!!, {msg_date} - {int(row[3])}')
                 if msg_date < int(row[3]):
                     date = 0  # Don't count for the future
                 else:
                     date = int(msg_date - int(row[3])) // 86400
                 date = '️⃣'.join(tuple(str(date)))
-                if len(temp + row[2]) < 4000:
+                if len(temp + row[2]) < 1000:
                     temp += f'Day\'s since {row[2]}: {date}️⃣\n'
                 else:
                     send_msg(chat_id=chat_id, msg=temp)
@@ -221,15 +222,21 @@ def counting_show(chat_id, msg_date, msg):
         else:
             c.execute("SELECT * FROM MAIN WHERE CHAT_ID=? AND NAME=?", (str(chat_id), str(msg)))
             result = c.fetchone()
-            date = int(msg_date - int(result[3])) // 86400
+            if msg_date < int(result[3]):
+                    date = 0  # Don't count for the future
+            else:
+                date = int(msg_date - int(result[3])) // 86400
             date = '️⃣'.join(tuple(str(date)))
             temp += f'Day\'s since {result[2]}: {date}️⃣\n'
     except:
-        echo(date=msg_date, chat=chat_id, msg=sys.exc_info(), warn=True)
+        connect.close()
         temp = 'Nothing to show'
+        send_msg(chat_id=chat_id, msg=temp)
+        echo(date=msg_date, chat=chat_id, msg=f'{msg} - {sys.exc_info()}', warn=True)
+        return 0
     connect.close()
     send_msg(chat_id=chat_id, msg=temp)
-    echo(date=msg_date, chat=chat_id, msg=f'!bot show {msg}', warn=True)
+    return 1
 
 
 def counting_reset(chat_id, msg_date, msg):

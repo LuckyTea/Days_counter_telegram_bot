@@ -284,5 +284,64 @@ class counting_start(unittest.TestCase):
             ...
 
 
+class counting_show(unittest.TestCase):
+    def setUp(self):
+        m.I.__init__()
+        m.I.DB_NAME = 'test_case.db'
+        m.chat_id = 24101991
+        m.msg_date = 688251600
+
+    def test_counting_show_all(self):
+        m.init_db()
+        connect = sqlite3.connect(m.I.DB_NAME)
+        c = connect.cursor()
+        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (?, ?, ?, ?)", (0, m.chat_id, 'smth', m.msg_date))
+        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (?, ?, ?, ?)", (1, m.chat_id, 'smth', int(time.time())))
+        connect.commit()
+        connect.close()
+        self.assertEqual(m.counting_show(m.chat_id, m.msg_date, 'all'), 1)
+
+    def test_counting_show_all_fail(self):
+        m.init_db()
+        self.assertEqual(m.counting_show(m.chat_id, m.msg_date, 'all'), 0)
+
+    def test_counting_show_smt(self):
+        m.init_db()
+        connect = sqlite3.connect(m.I.DB_NAME)
+        c = connect.cursor()
+        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (?, ?, ?, ?)", (0, m.chat_id, 'smth', m.msg_date))
+        connect.commit()
+        connect.close()
+        self.assertEqual(m.counting_show(m.chat_id, m.msg_date, 'smth'), 1)
+
+    def test_counting_show_smt_fail(self):
+        m.init_db()
+        self.assertEqual(m.counting_show(m.chat_id, m.msg_date, 'smth'), 0)
+
+    def test_show_smt_future(self):
+        m.init_db()
+        connect = sqlite3.connect(m.I.DB_NAME)
+        c = connect.cursor()
+        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (?, ?, ?, ?)", (0, m.chat_id, 'smth', int(time.time())))
+        connect.commit()
+        connect.close()
+        self.assertEqual(m.counting_show(m.chat_id, m.msg_date, 'smth'), 1)
+
+    def test_counting_show_looooong(self):
+        m.init_db()
+        connect = sqlite3.connect(m.I.DB_NAME)
+        c = connect.cursor()
+        for i in range(100):
+            c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (?, ?, ?, ?)", (i, m.chat_id, f'{i*150}', m.msg_date))
+        connect.commit()
+        connect.close()
+        self.assertEqual(m.counting_show(m.chat_id, m.msg_date, 'all'), 1)
+
+    def tearDown(self):
+        try:
+            os.remove('test_case.db')
+        except FileNotFoundError:
+            ...
+
 if __name__ == '__main__':
     unittest.main()
