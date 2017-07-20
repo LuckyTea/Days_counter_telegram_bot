@@ -159,17 +159,17 @@ def counting_start(chat_id, msg_date, msg):
     date = ''
     if re.search(r'^!bot start counting for (.*)', msg):
         name = msg[24:]
-        date = int(time.mktime(datetime.strptime(time.strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))
+        date = int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))
     elif re.search(r'^!bot start counting since (now|today|tomorrow|yesterday) for (.*)', msg):
         res = re.match(r'^!bot start counting since (now|today|tomorrow|yesterday) for (.*)', msg)
         name = res.group(2)
         date = int(time.mktime(datetime.strptime(time.strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))
         if res.group(1) == 'now' or res.group(1) == 'today':
-            date = date
+            date = msg_date
         elif res.group(1) == 'tomorrow':
-            date = date + 86400
+            date = msg_date + 86400
         elif res.group(1) == 'yesterday':
-            date = date - 86400
+            date = msg_date - 86400
     elif re.search(r'!bot start counting since ([\d]{2}[.][\d]{2}[.][\d]{4}) for (.*)', msg):
         res = re.match(r'!bot start counting since ([\d]{2}[.][\d]{2}[.][\d]{4}) for (.*)', msg)
         name = res.group(2)
@@ -178,7 +178,8 @@ def counting_start(chat_id, msg_date, msg):
             if date < 0:
                 date = 0
                 msg += '. But honestly i can\'t count earlier than 01.01.1970.'
-        except Exception as e:  # fix for windows
+        # fix for windows
+        except Exception as e:
             date = 0
             msg += '. But honestly i can\'t count earlier than 01.01.1970.'
     if date != '' and name != '':
@@ -189,11 +190,9 @@ def counting_start(chat_id, msg_date, msg):
             except sqlite3.IntegrityError:
                 I.LAST_PRECIOUS += 1
         send_msg(chat_id=chat_id, msg=f'I {msg[5:]}')
-        echo(date=msg_date, chat=chat_id, msg=msg, warn=True)
         I.LAST_PRECIOUS += 1
     else:
         send_msg(chat_id=chat_id, msg=f'Wrong command')
-        echo(date=msg_date, chat=chat_id, msg=f'Failed to add: {msg}', warn=True)
     connect.commit()
     connect.close()
 

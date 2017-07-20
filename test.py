@@ -228,7 +228,7 @@ class counting_start(unittest.TestCase):
         c.execute('SELECT * FROM MAIN')
         result = c.fetchall()
         connect.close()
-        self.assertEqual(result, [(0, 2, 'block id 1', 3), (1, 24101991, 'lazy', 1500498000)])
+        self.assertEqual(result, [(0, 2, 'block id 1', 3), (1, 24101991, 'lazy', int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(m.msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple())))])
 
     def test_counting_start_word(self):
         m.init_db()
@@ -241,10 +241,10 @@ class counting_start(unittest.TestCase):
         c.execute('SELECT * FROM MAIN')
         result = c.fetchall()
         connect.close()
-        self.assertEqual(result,  [(0, 24101991, 'now', 1500498000),
-                                   (1, 24101991, 'today', 1500498000),
-                                   (2, 24101991, 'tomorrow', 1500584400),
-                                   (3, 24101991, 'yesterday', 1500411600)])
+        self.assertEqual(result,  [(0, 24101991, 'now', int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(m.msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))),
+                                   (1, 24101991, 'today', int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(m.msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))),
+                                   (2, 24101991, 'tomorrow', int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(m.msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple())) + 86400),
+                                   (3, 24101991, 'yesterday', int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(m.msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple())) - 86400)])
         self.assertEqual(m.I.LAST_PRECIOUS, 4)
 
     def test_counting_start_date(self):
