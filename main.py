@@ -152,11 +152,6 @@ def send_msg(chat_id, msg='Good day, sir!'):
     return action(req)
 
 
-def send_sticker(chat_id, file_id):
-    req = f'{I.HOST}/sendSticker?chat_id={chat_id}&sticker={file_id}'
-    return action(req)
-
-
 def counting_start(chat_id, msg_date, msg):
     connect = sqlite3.connect(I.DB_NAME)
     c = connect.cursor()
