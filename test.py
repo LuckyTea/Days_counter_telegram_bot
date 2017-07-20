@@ -261,7 +261,7 @@ class counting_start(unittest.TestCase):
 
     def test_counting_start_date_out(self):
         m.init_db()
-        msg = '!bot start counting since 31.12.1969 for 01.01.1970'
+        msg = '!bot start counting since 31.12.1950 for 01.01.1970'
         m.counting_start(m.chat_id, m.msg_date, msg)
         connect = sqlite3.connect(m.I.DB_NAME)
         c = connect.cursor()
