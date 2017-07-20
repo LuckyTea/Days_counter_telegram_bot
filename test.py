@@ -206,5 +206,83 @@ class echo(unittest.TestCase):
         warn = True
         self.assertEqual(m.echo(id, m.date, user, chat, msg, warn), temp)
 
+
+class counting_start(unittest.TestCase):
+    def setUp(self):
+        m.I.__init__()
+        m.I.DB_NAME = 'test_case.db'
+        m.chat_id = 24101991
+        m.msg_date = 688251600
+
+    def test_counting_start_lazy(self):
+        m.init_db()
+        msg = '!bot start counting for lazy'
+        connect = sqlite3.connect(m.I.DB_NAME)
+        c = connect.cursor()
+        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (0, 2, 'block id 1', 3)")
+        connect.commit()
+        connect.close()
+        m.counting_start(m.chat_id, m.msg_date, msg)
+        connect = sqlite3.connect(m.I.DB_NAME)
+        c = connect.cursor()
+        c.execute('SELECT * FROM MAIN')
+        result = c.fetchall()
+        connect.close()
+        self.assertEqual(result, [(0, 2, 'block id 1', 3), (1, 24101991, 'lazy', 1500498000)])
+
+    def test_counting_start_word(self):
+        m.init_db()
+        words = ('now', 'today', 'tomorrow', 'yesterday')
+        for i in words:
+            msg = f'!bot start counting since {i} for {i}'
+            m.counting_start(m.chat_id, m.msg_date, msg)
+        connect = sqlite3.connect(m.I.DB_NAME)
+        c = connect.cursor()
+        c.execute('SELECT * FROM MAIN')
+        result = c.fetchall()
+        connect.close()
+        self.assertEqual(result,  [(0, 24101991, 'now', 1500498000),
+                                   (1, 24101991, 'today', 1500498000),
+                                   (2, 24101991, 'tomorrow', 1500584400),
+                                   (3, 24101991, 'yesterday', 1500411600)])
+        self.assertEqual(m.I.LAST_PRECIOUS, 4)
+
+    def test_counting_start_date(self):
+        m.init_db()
+        msg = '!bot start counting since 24.10.1991 for 24.10.1991'
+        m.counting_start(m.chat_id, m.msg_date, msg)
+        connect = sqlite3.connect(m.I.DB_NAME)
+        c = connect.cursor()
+        c.execute('SELECT * FROM MAIN')
+        result = c.fetchall()
+        connect.close()
+        self.assertEqual(result,  [(0, 24101991, '24.10.1991', 688251600)])
+        self.assertEqual(m.I.LAST_PRECIOUS, 1)
+
+    def test_counting_start_date_out(self):
+        m.init_db()
+        msg = '!bot start counting since 31.12.1969 for 01.01.1970'
+        m.counting_start(m.chat_id, m.msg_date, msg)
+        connect = sqlite3.connect(m.I.DB_NAME)
+        c = connect.cursor()
+        c.execute('SELECT * FROM MAIN')
+        result = c.fetchall()
+        connect.close()
+        self.assertEqual(result,  [(0, 24101991, '01.01.1970', 0)])
+        self.assertEqual(m.I.LAST_PRECIOUS, 1)
+
+    def test_counting_start_fail(self):
+        m.init_db()
+        msg = '!bot start counting and show'
+        m.counting_start(m.chat_id, m.msg_date, msg)
+        self.assertEqual(m.I.LAST_PRECIOUS, 0)
+
+    def tearDown(self):
+        try:
+            os.remove('test_case.db')
+        except FileNotFoundError:
+            ...
+
+
 if __name__ == '__main__':
     unittest.main()
