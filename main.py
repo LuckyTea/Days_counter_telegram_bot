@@ -156,41 +156,40 @@ def counting_start(chat_id, msg_date, msg):
     connect = sqlite3.connect(I.DB_NAME)
     c = connect.cursor()
     name = ''
-    date = ''
+    # get timestamp of date
+    timestamp = int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))
+    # lazy counter
     if re.search(r'^!bot start counting for (.*)', msg):
         name = msg[24:]
-        date = int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))
+    # words counter
     elif re.search(r'^!bot start counting since (now|today|tomorrow|yesterday) for (.*)', msg):
         res = re.match(r'^!bot start counting since (now|today|tomorrow|yesterday) for (.*)', msg)
         name = res.group(2)
-        date = int(time.mktime(datetime.strptime(time.strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))
-        if res.group(1) == 'now' or res.group(1) == 'today':
-            date = msg_date
-        elif res.group(1) == 'tomorrow':
-            date = msg_date + 86400
+        if res.group(1) == 'tomorrow':
+            timestamp += 86400
         elif res.group(1) == 'yesterday':
-            date = msg_date - 86400
+            timestamp -= 86400
+    # date counter
     elif re.search(r'!bot start counting since ([\d]{2}[.][\d]{2}[.][\d]{4}) for (.*)', msg):
         res = re.match(r'!bot start counting since ([\d]{2}[.][\d]{2}[.][\d]{4}) for (.*)', msg)
         name = res.group(2)
         try:
-            date = int(time.mktime(datetime.strptime(res.group(1), "%d.%m.%Y").timetuple()))
-            if date < 0:
-                date = 0
-                msg += '. But honestly i can\'t count earlier than 01.01.1970.'
+            timestamp = int(time.mktime(datetime.strptime(res.group(1), "%d.%m.%Y").timetuple()))
+            if timestamp < 0:
+                raise
         # fix for windows
         except Exception as e:
-            date = 0
+            timestamp = 0
             msg += '. But honestly i can\'t count earlier than 01.01.1970.'
-    if date != '' and name != '':
+    if name != '':
         while 1:
             try:
-                c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (?, ?, ?, ?)", (I.LAST_PRECIOUS, chat_id, name, date))
+                c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (?, ?, ?, ?)", (I.LAST_PRECIOUS, chat_id, name, timestamp))
+                send_msg(chat_id=chat_id, msg=f'I {msg[5:]}')
+                I.LAST_PRECIOUS += 1
                 break
             except sqlite3.IntegrityError:
                 I.LAST_PRECIOUS += 1
-        send_msg(chat_id=chat_id, msg=f'I {msg[5:]}')
-        I.LAST_PRECIOUS += 1
     else:
         send_msg(chat_id=chat_id, msg=f'Wrong command')
     connect.commit()
