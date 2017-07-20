@@ -175,7 +175,10 @@ def counting_start(chat_id, msg_date, msg):
         name = res.group(2)
         try:
             date = int(time.mktime(datetime.strptime(res.group(1), "%d.%m.%Y").timetuple()))
-        except Exception as e:
+            if date < 0:
+                date = 0
+                msg += '. But honestly i can\'t count earlier than 01.01.1970.'
+        except Exception as e:  # fix for windows
             date = 0
             msg += '. But honestly i can\'t count earlier than 01.01.1970.'
     if date != '' and name != '':
