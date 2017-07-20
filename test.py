@@ -256,7 +256,7 @@ class counting_start(unittest.TestCase):
         c.execute('SELECT * FROM MAIN')
         result = c.fetchall()
         connect.close()
-        self.assertEqual(result,  [(0, 24101991, '24.10.1991', 688251600)])
+        self.assertEqual(result,  [(0, 24101991, '24.10.1991', int(time.mktime(datetime.strptime("24.10.1991", "%d.%m.%Y").timetuple())))])
         self.assertEqual(m.I.LAST_PRECIOUS, 1)
 
     def test_counting_start_date_out(self):
