@@ -208,6 +208,8 @@ def counting_show(chat_id, msg_date, msg):
         if msg == 'all':
             c.execute("SELECT * FROM MAIN WHERE CHAT_ID=?", (str(chat_id), ))
             result = c.fetchall()
+            if len(result) is 0:
+                raise
             for row in result:
                 if msg_date < int(row[3]):
                     date = 0  # Don't count for the future
