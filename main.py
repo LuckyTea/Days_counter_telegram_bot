@@ -35,7 +35,7 @@ def main():
         msg = get_updates(offset=I.LAST_ID)
         if len(msg["result"]) > 0:
             for last_update in range(len(msg['result'])):
-                if not handle_msg(msg, last_update):
+                if handle_msg(msg, last_update) is 0:
                     run = 0
         time.sleep(0.5)
 
@@ -77,8 +77,8 @@ def get_status(req):
     return response["ok"]
 
 
-def get_updates(offset=None):
-    req = f'{I.HOST}/getUpdates?timeout=100'
+def get_updates(offset=None, timeout=100):
+    req = f'{I.HOST}/getUpdates?timeout={timeout}'
     if offset:
         req += f'&offset={offset}'
     msg = get_json(req)
@@ -86,9 +86,9 @@ def get_updates(offset=None):
 
 
 def handle_msg(msg, last_update):
-    warn = True
+    # handling message id
     msg_id = msg['result'][last_update]['update_id']
-    # handling type of message
+    # handling message type
     try:
         msg_header = msg['result'][last_update]['message']
     except:
@@ -98,10 +98,7 @@ def handle_msg(msg, last_update):
     # handling message author
     msg_user = msg_header['from']['username']
     # handling message chat id
-    try:
-        msg_chat_id = msg_header['chat']['id']
-    except:
-        msg_chat_id = msg_header['from']['id']
+    msg_chat_id = msg_header['chat']['id']
     # handling message text
     try:
         msg_text = msg_header['text']
@@ -110,36 +107,34 @@ def handle_msg(msg, last_update):
             msg_text = msg_header['sticker']['emoji']
         except:
             msg_text = '...'
-            echo(msg=f'!!!Some stange message: {msg_header}', warn=True)
+            echo(msg=f'!!! Some stange message: {msg_header}', warn=True)
+    # logging
+    echo(msg_id, msg_date, msg_user, msg_chat_id, msg_text)
+    I.LAST_ID = msg_id + 1
     # shutdown button
-    if msg_text.lower() == '/bot_stop' and msg_chat_id == I.OWNER_ID and I.LAST_ID == msg_id:
-        send_sticker(chat_id=msg_chat_id, file_id='CAADAgADwwQAAvoLtgiyQa_zvBHWHwI')
-        get_updates(msg_id)
-        return False
+    if msg_text.lower() == '/bot_stop' and msg_chat_id == I.OWNER_ID:
+        get_updates(offset=msg_id+1, timeout=0)
+        send_msg(msg_chat_id, '🏁')
+        return 0
     # start counting
-    elif msg_text.lower()[:20] == '!bot start counting ' and I.LAST_ID == msg_id:
-        if len(msg_text[20:]) > 1000:
-            send_msg(chat_id=msg_chat_id, msg='Message is too long!')
+    elif msg_text.lower()[:20] == '!bot start counting ':
+        if len(msg_text[20:]) > 200:
+            return send_msg(msg_chat_id, 'This message is too long. It cannot be record.')
         else:
-            counting_start(chat_id=msg_chat_id, msg_date=msg_date, msg=msg_text)
+            return counting_start(msg_chat_id, msg_date, msg_text)
     # show counting
     elif msg_text.lower()[:10] == '!bot show ':
-        counting_show(chat_id=msg_chat_id, msg_date=msg_date, msg=msg_text[10:])
+        return counting_show(msg_chat_id, msg_date, msg_text[10:])
     # reset counting
     elif msg_text.lower()[:11] == '!bot reset ':
-        counting_reset(chat_id=msg_chat_id, msg_date=msg_date, msg=msg_text[11:])
+        return counting_reset(msg_chat_id, msg_date, msg_text[11:])
     # delete counting
     elif msg_text.lower()[:12] == '!bot delete ':
-        counting_delete(chat_id=msg_chat_id, msg_date=msg_date, msg=msg_text[12:])
+        return counting_delete(msg_chat_id, msg_date, msg_text[12:])
     # show help
     elif msg_text.lower()[:9] == '!bot help' and len(msg_text) == 9:
-        send_help(chat_id=msg_chat_id)
-    else:
-        warn = False
-    echo(id=msg_id, date=msg_date, user=msg_user, chat=msg_chat_id, msg=msg_text, warn=warn)
-    print(msg_header)
-    I.LAST_ID = msg_id + 1
-    return True
+        return send_help(msg_chat_id)
+    return 1
 
 
 def echo(id='...', date=time.time(), user='...', chat='...', msg='...', warn=False):
