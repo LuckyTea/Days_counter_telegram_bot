@@ -240,22 +240,22 @@ def counting_show(chat_id, msg_date, msg):
 
 
 def counting_reset(chat_id, msg_date, msg):
-    connect = sqlite3.connect(I.DB_NAME)
-    c = connect.cursor()
-    temp = ''
     try:
-        c.execute("UPDATE MAIN SET TIME=? WHERE CHAT_ID=? AND NAME=?", (int(time.time()), str(chat_id), str(msg)))
+        connect = sqlite3.connect(I.DB_NAME)
+        c = connect.cursor()
+        temp = ''
+        # reset all by design
+        c.execute("UPDATE MAIN SET TIME=? WHERE CHAT_ID=? AND NAME=?", (int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple())), str(chat_id), str(msg)))
         result = c.fetchall()
         if connect.total_changes is 0:
-            raise Exception('Nothing to reset')
+            raise
         temp = f'Resetting {connect.total_changes} records'
         connect.commit()
+        connect.close()
     except:
         echo(date=msg_date, chat=chat_id, msg=sys.exc_info(), warn=True)
         temp = 'Nothing to reset'
-    connect.close()
     send_msg(chat_id=chat_id, msg=temp)
-    echo(date=msg_date, chat=chat_id, msg=f'!bot reset {msg}', warn=True)
 
 
 def counting_delete(chat_id, msg_date, msg):

@@ -241,10 +241,10 @@ class counting_start(unittest.TestCase):
         c.execute('SELECT * FROM MAIN')
         result = c.fetchall()
         connect.close()
-        self.assertEqual(result,  [(0, 24101991, 'now', int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(m.msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))),
-                                   (1, 24101991, 'today', int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(m.msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))),
-                                   (2, 24101991, 'tomorrow', int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(m.msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple())) + 86400),
-                                   (3, 24101991, 'yesterday', int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(m.msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple())) - 86400)])
+        self.assertEqual(result, [(0, 24101991, 'now', int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(m.msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))),
+                                  (1, 24101991, 'today', int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(m.msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))),
+                                  (2, 24101991, 'tomorrow', int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(m.msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple())) + 86400),
+                                  (3, 24101991, 'yesterday', int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(m.msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple())) - 86400)])
         self.assertEqual(m.I.LAST_PRECIOUS, 4)
 
     def test_counting_start_date(self):
@@ -256,7 +256,7 @@ class counting_start(unittest.TestCase):
         c.execute('SELECT * FROM MAIN')
         result = c.fetchall()
         connect.close()
-        self.assertEqual(result,  [(0, 24101991, '24.10.1991', int(time.mktime(datetime.strptime("24.10.1991", "%d.%m.%Y").timetuple())))])
+        self.assertEqual(result, [(0, 24101991, '24.10.1991', int(time.mktime(datetime.strptime("24.10.1991", "%d.%m.%Y").timetuple())))])
         self.assertEqual(m.I.LAST_PRECIOUS, 1)
 
     def test_counting_start_date_out(self):
@@ -336,6 +336,44 @@ class counting_show(unittest.TestCase):
         connect.commit()
         connect.close()
         self.assertEqual(m.counting_show(m.chat_id, m.msg_date, 'all'), 1)
+
+    def tearDown(self):
+        try:
+            os.remove('test_case.db')
+        except FileNotFoundError:
+            ...
+
+
+class counting_reset(unittest.TestCase):
+    def setUp(self):
+        m.I.__init__()
+        m.I.DB_NAME = 'test_case.db'
+        m.chat_id = 24101991
+        m.msg_date = 688251600
+
+    def test_counting_reset_succ(self):
+        m.init_db()
+        connect = sqlite3.connect(m.I.DB_NAME)
+        c = connect.cursor()
+        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (?, ?, ?, ?)", (0, m.chat_id, 'reset', int(time.time())))
+        connect.commit()
+        m.counting_reset(m.chat_id, m.msg_date, 'reset')
+        c.execute('SELECT * FROM MAIN')
+        result = c.fetchall()
+        connect.close()
+        self.assertEqual(result, [(0, 24101991, 'reset', int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(m.msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple())))])
+
+    def test_counting_reset_fail(self):
+        m.init_db()
+        connect = sqlite3.connect(m.I.DB_NAME)
+        c = connect.cursor()
+        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (?, ?, ?, ?)", (0, m.chat_id, 'reset', int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(m.msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))))
+        connect.commit()
+        m.counting_reset(m.chat_id, m.msg_date, 'reset fail')
+        c.execute('SELECT * FROM MAIN')
+        result = c.fetchall()
+        connect.close()
+        self.assertEqual(result, [(0, 24101991, 'reset', int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(m.msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple())))])
 
     def tearDown(self):
         try:
