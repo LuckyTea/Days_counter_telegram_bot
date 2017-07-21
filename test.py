@@ -381,5 +381,35 @@ class counting_reset(unittest.TestCase):
         except FileNotFoundError:
             ...
 
+
+class counting_delete(unittest.TestCase):
+    def setUp(self):
+        m.I.__init__()
+        m.I.DB_NAME = 'test_case.db'
+        m.chat_id = 24101991
+        m.msg_date = 688251600
+
+    def test_counting_delete_succ(self):
+        m.init_db()
+        connect = sqlite3.connect(m.I.DB_NAME)
+        c = connect.cursor()
+        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (?, ?, ?, ?)", (0, m.chat_id, 'delete', int(time.time())))
+        connect.commit()
+        m.counting_delete(m.chat_id, m.msg_date, 'delete')
+        c.execute('SELECT * FROM MAIN')
+        result = c.fetchall()
+        connect.close()
+        self.assertEqual(result, [])
+
+    def test_counting_delete_fail(self):
+        m.init_db()
+        m.counting_delete(m.chat_id, m.msg_date, 'delete')
+
+    def tearDown(self):
+        try:
+            os.remove('test_case.db')
+        except FileNotFoundError:
+            ...
+
 if __name__ == '__main__':
     unittest.main()

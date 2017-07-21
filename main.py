@@ -176,7 +176,7 @@ def counting_start(chat_id, msg_date, msg):
         try:
             timestamp = int(time.mktime(datetime.strptime(res.group(1), "%d.%m.%Y").timetuple()))
             if timestamp < 0:
-                raise
+                raise Exception
         # fix for windows
         except Exception as e:
             timestamp = 0
@@ -205,9 +205,8 @@ def counting_show(chat_id, msg_date, msg):
             c.execute("SELECT * FROM MAIN WHERE CHAT_ID=?", (str(chat_id), ))
             result = c.fetchall()
             if len(result) is 0:
-                raise
+                raise Exception
             for row in result:
-                print(f'!!!, {msg_date} - {int(row[3])}')
                 if msg_date < int(row[3]):
                     date = 0  # Don't count for the future
                 else:
@@ -248,7 +247,7 @@ def counting_reset(chat_id, msg_date, msg):
         c.execute("UPDATE MAIN SET TIME=? WHERE CHAT_ID=? AND NAME=?", (int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple())), str(chat_id), str(msg)))
         result = c.fetchall()
         if connect.total_changes is 0:
-            raise
+            raise Exception
         temp = f'Resetting {connect.total_changes} records'
         connect.commit()
         connect.close()
@@ -275,7 +274,6 @@ def counting_delete(chat_id, msg_date, msg):
     connect.commit()
     connect.close()
     send_msg(chat_id=chat_id, msg=temp)
-    echo(date=msg_date, chat=chat_id, msg=f'!bot delete {msg}', warn=True)
 
 
 def send_help(chat_id):
