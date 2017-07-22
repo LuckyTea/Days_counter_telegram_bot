@@ -10,7 +10,7 @@ install:
   - pip install codecov
 
 script:
-  - coverage run Days_counter_telegram_bot\\test.py
+  - coverage run /Days_counter_telegram_bot/test.py
 
 after_success:
   - codecov
