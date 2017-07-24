@@ -23,9 +23,9 @@ class init_db(unittest.TestCase):
                  (ID      INT PRIMARY KEY   NOT NULL,
                  CHAT_ID              INT   NOT NULL,
                  NAME                TEXT   NOT NULL,
-                 TIME                 INT   NOT NULL);''')
-        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (1, 2, 'Test Value 1', 4)")
-        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (5, 6, 'Test Value 2', 8)")
+                 TIME                TEXT   NOT NULL);''')
+        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (1, 2, 'Test Value 1', '01.01.1970')")
+        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (5, 6, 'Test Value 2', '02.02.1970')")
         connect.commit()
         connect.close()
         self.assertEqual(m.init_db(), 1)
@@ -219,7 +219,7 @@ class counting_start(unittest.TestCase):
         msg = '!bot start counting for lazy'
         connect = sqlite3.connect(m.I.DB_NAME)
         c = connect.cursor()
-        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (0, 2, 'block id 1', 3)")
+        c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (0, 2, 'block id 1', '01.01.1970')")
         connect.commit()
         connect.close()
         m.counting_start(m.chat_id, m.msg_date, msg)
@@ -228,7 +228,7 @@ class counting_start(unittest.TestCase):
         c.execute('SELECT * FROM MAIN')
         result = c.fetchall()
         connect.close()
-        self.assertEqual(result, [(0, 2, 'block id 1', 3), (1, 24101991, 'lazy', int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(m.msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple())))])
+        self.assertEqual(result, [(0, 2, 'block id 1', '01.01.1970'), (1, 24101991, 'lazy', datetime.strftime(datetime.fromtimestamp(m.msg_date), '%d.%m.%Y'))])
 
     def test_counting_start_word(self):
         m.init_db()

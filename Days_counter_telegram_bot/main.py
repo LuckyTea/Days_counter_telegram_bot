@@ -3,7 +3,7 @@ Days counter - telegram bot
 Can count days since smth, for example - last jewish tricks
 '''
 
-from datetime import datetime
+import datetime
 import json
 import re
 import requests
@@ -49,7 +49,7 @@ def init_db():
                      (ID      INT PRIMARY KEY   NOT NULL,
                      CHAT_ID              INT   NOT NULL,
                      NAME                TEXT   NOT NULL,
-                     TIME                 INT   NOT NULL);''')
+                     TIME                TEXT   NOT NULL);''')
         except sqlite3.OperationalError:
             c.execute('SELECT COUNT(*) FROM MAIN')
             I.LAST_PRECIOUS = int(c.fetchone()[0])
@@ -138,7 +138,7 @@ def handle_msg(msg, last_update):
 
 
 def echo(id='...', date=time.time(), user='...', chat='...', msg='...', warn=False):
-    date = datetime.fromtimestamp(int(date)).strftime('%d.%m.%Y - %H:%M:%S')
+    date = datetime.datetime.fromtimestamp(int(date)).strftime('%d.%m.%Y - %H:%M:%S')
     temp = (f'At {date} user {user} from {chat} post message #{id}:\n{msg}\n{"="*70}')
     if warn:
         temp = (f'\x1b[0;31;40m{temp}\x1b[0m')
@@ -156,8 +156,8 @@ def counting_start(chat_id, msg_date, msg):
     connect = sqlite3.connect(I.DB_NAME)
     c = connect.cursor()
     name = ''
-    # get timestamp of date
-    timestamp = int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple()))
+    # get date
+    date = datetime.datetime.strftime(datetime.datetime.fromtimestamp(msg_date), '%d.%m.%Y')
     # lazy counter
     if re.search(r'^!bot start counting for (.*)', msg):
         name = msg[24:]
@@ -166,25 +166,18 @@ def counting_start(chat_id, msg_date, msg):
         res = re.match(r'^!bot start counting since (now|today|tomorrow|yesterday) for (.*)', msg)
         name = res.group(2)
         if res.group(1) == 'tomorrow':
-            timestamp += 86400
+            date += datetime.timedelta(days=1)
         elif res.group(1) == 'yesterday':
-            timestamp -= 86400
+            date -= datetime.timedelta(days=1)
     # date counter
     elif re.search(r'!bot start counting since ([\d]{2}[.][\d]{2}[.][\d]{4}) for (.*)', msg):
         res = re.match(r'!bot start counting since ([\d]{2}[.][\d]{2}[.][\d]{4}) for (.*)', msg)
         name = res.group(2)
-        try:
-            timestamp = int(time.mktime(datetime.strptime(res.group(1), "%d.%m.%Y").timetuple()))
-            if timestamp < 0:
-                raise Exception
-        # fix for windows
-        except Exception as e:
-            timestamp = 0
-            msg += '. But honestly i can\'t count earlier than 01.01.1970.'
+        date = datetime.datetime.strptime(res.group(1), '%d.%m.%Y')
     if name != '':
         while 1:
             try:
-                c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (?, ?, ?, ?)", (I.LAST_PRECIOUS, chat_id, name, timestamp))
+                c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (?, ?, ?, ?)", (I.LAST_PRECIOUS, chat_id, name, date))
                 send_msg(chat_id=chat_id, msg=f'I {msg[5:]}')
                 I.LAST_PRECIOUS += 1
                 break
@@ -244,7 +237,7 @@ def counting_reset(chat_id, msg_date, msg):
         c = connect.cursor()
         temp = ''
         # reset all by design
-        c.execute("UPDATE MAIN SET TIME=? WHERE CHAT_ID=? AND NAME=?", (int(time.mktime(datetime.strptime(datetime.fromtimestamp(int(msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple())), str(chat_id), str(msg)))
+        c.execute("UPDATE MAIN SET TIME=? WHERE CHAT_ID=? AND NAME=?", (int(time.mktime(datetime.datetime.strptime(datetime.datetime.fromtimestamp(int(msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple())), str(chat_id), str(msg)))
         result = c.fetchall()
         if connect.total_changes is 0:
             raise Exception
