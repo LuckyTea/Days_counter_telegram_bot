@@ -42,15 +42,13 @@ def init_db():
     try:
         connect = sqlite3.connect(I.DB_NAME)
         c = connect.cursor()
-        try:
-            c.execute('''CREATE TABLE MAIN
-                     (ID      INT PRIMARY KEY   NOT NULL,
-                     CHAT_ID              INT   NOT NULL,
-                     NAME                TEXT   NOT NULL,
-                     TIME                TEXT   NOT NULL);''')
-        except sqlite3.OperationalError:
-            c.execute('SELECT COUNT(*) FROM MAIN')
-            I.LAST_PRECIOUS = int(c.fetchone()[0])
+        c.execute('''CREATE TABLE IF NOT EXISTS main
+                 (id      INT PRIMARY KEY   NOT NULL,
+                 chat_id              INT   NOT NULL,
+                 name                TEXT   NOT NULL,
+                 time                TEXT   NOT NULL);''')
+        c.execute('SELECT COUNT(*) FROM main')
+        I.LAST_PRECIOUS = int(c.fetchone()[0])
         connect.close()
         return 1
     except Exception as e:
@@ -177,7 +175,7 @@ def counting_start(chat_id, msg_date, msg):
         date = date.strftime('%d.%m.%Y')
         while 1:
             try:
-                c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (?, ?, ?, ?)", (I.LAST_PRECIOUS, chat_id, name, date))
+                c.execute("INSERT INTO main (id, chat_id, name, time) VALUES (?, ?, ?, ?)", (I.LAST_PRECIOUS, chat_id, name, date))
                 send_msg(chat_id=chat_id, msg=f'I {msg[5:]}')
                 I.LAST_PRECIOUS += 1
                 break
@@ -196,7 +194,7 @@ def counting_show(chat_id, msg_date, msg):
     temp = ''
     try:
         if msg == 'all':
-            c.execute("SELECT * FROM MAIN WHERE CHAT_ID=?", (str(chat_id), ))
+            c.execute("SELECT * FROM main WHERE chat_id=?", (str(chat_id), ))
             result = c.fetchall()
             if len(result) is 0:
                 raise Exception
@@ -214,7 +212,7 @@ def counting_show(chat_id, msg_date, msg):
                     temp = ''
                     temp += f'Day\'s since {row[2]}: {date}️⃣\n'
         else:
-            c.execute("SELECT * FROM MAIN WHERE CHAT_ID=? AND NAME=?", (str(chat_id), str(msg)))
+            c.execute("SELECT * FROM main WHERE chat_id=? AND name=?", (str(chat_id), str(msg)))
             result = c.fetchone()
             date = datetime.datetime.strptime(result[3], '%d.%m.%Y')
             print('!!!\n', msg_date, date, '\n!!!\n')
@@ -241,7 +239,7 @@ def counting_reset(chat_id, msg_date, msg):
         c = connect.cursor()
         temp = ''
         # reset all by design
-        c.execute("UPDATE MAIN SET TIME=? WHERE CHAT_ID=? AND NAME=?", (datetime.datetime.fromtimestamp(msg_date).strftime('%d.%m.%Y'), str(chat_id), str(msg)))
+        c.execute("UPDATE main SET TIME=? WHERE chat_id=? AND name=?", (datetime.datetime.fromtimestamp(msg_date).strftime('%d.%m.%Y'), str(chat_id), str(msg)))
         result = c.fetchall()
         if connect.total_changes is 0:
             raise Exception
@@ -259,9 +257,9 @@ def counting_delete(chat_id, msg_date, msg):
     c = connect.cursor()
     temp = ''
     try:
-        result = c.execute("SELECT TIME FROM MAIN WHERE CHAT_ID=? AND ID=(SELECT MIN(ID) FROM MAIN WHERE CHAT_ID=? AND NAME=?)", (str(chat_id), str(chat_id), str(msg)))
+        result = c.execute("SELECT time FROM main WHERE chat_id=? AND id=(SELECT MIN(id) FROM main WHERE chat_id=? AND name=?)", (str(chat_id), str(chat_id), str(msg)))
         date = c.fetchone()
-        c.execute("DELETE FROM MAIN WHERE CHAT_ID=? AND ID=(SELECT MIN(ID) FROM MAIN WHERE CHAT_ID=? AND NAME=?)", (str(chat_id), str(chat_id), str(msg)))
+        c.execute("DELETE FROM main WHERE chat_id=? AND id=(SELECT MIN(id) FROM main WHERE chat_id=? AND name=?)", (str(chat_id), str(chat_id), str(msg)))
         date = datetime.datetime.strptime(date[0], '%d.%m.%Y')
         msg_date = datetime.datetime.strptime(datetime.datetime.strftime(datetime.datetime.fromtimestamp(msg_date), '%d.%m.%Y'), '%d.%m.%Y')
         if msg_date < date:
