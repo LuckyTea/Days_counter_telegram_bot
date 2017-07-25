@@ -2,13 +2,11 @@
 Days counter - telegram bot
 Can count days since smth, for example - last jewish tricks
 '''
-
 import datetime
 import json
 import re
 import requests
 import sqlite3
-import sys
 import time
 import urllib
 
@@ -55,8 +53,8 @@ def init_db():
             I.LAST_PRECIOUS = int(c.fetchone()[0])
         connect.close()
         return 1
-    except:
-        echo(msg=f'init_db() exit code 0 {sys.exc_info()}', warn=True)
+    except Exception as e:
+        echo(msg=f'init_db() exit code 0: {e}', warn=True)
         return 0
 
 
@@ -138,7 +136,8 @@ def handle_msg(msg, last_update):
 
 
 def echo(id='...', date=time.time(), user='...', chat='...', msg='...', warn=False):
-    date = datetime.datetime.fromtimestamp(int(date)).strftime('%d.%m.%Y - %H:%M:%S')
+    if not isinstance(date, str):
+        date = datetime.datetime.fromtimestamp(date).strftime('%d.%m.%Y - %H:%M:%S')
     temp = (f'At {date} user {user} from {chat} post message #{id}:\n{msg}\n{"="*70}')
     if warn:
         temp = (f'\x1b[0;31;40m{temp}\x1b[0m')
@@ -157,7 +156,7 @@ def counting_start(chat_id, msg_date, msg):
     c = connect.cursor()
     name = ''
     # get date
-    date = datetime.datetime.strftime(datetime.datetime.fromtimestamp(msg_date), '%d.%m.%Y')
+    date = datetime.datetime.strptime(datetime.datetime.strftime(datetime.datetime.fromtimestamp(msg_date), '%d.%m.%Y'), '%d.%m.%Y')
     # lazy counter
     if re.search(r'^!bot start counting for (.*)', msg):
         name = msg[24:]
@@ -175,6 +174,7 @@ def counting_start(chat_id, msg_date, msg):
         name = res.group(2)
         date = datetime.datetime.strptime(res.group(1), '%d.%m.%Y')
     if name != '':
+        date = date.strftime('%d.%m.%Y')
         while 1:
             try:
                 c.execute("INSERT INTO MAIN (ID, CHAT_ID, NAME, TIME) VALUES (?, ?, ?, ?)", (I.LAST_PRECIOUS, chat_id, name, date))
@@ -192,6 +192,7 @@ def counting_start(chat_id, msg_date, msg):
 def counting_show(chat_id, msg_date, msg):
     connect = sqlite3.connect(I.DB_NAME)
     c = connect.cursor()
+    msg_date = datetime.datetime.strptime(datetime.datetime.strftime(datetime.datetime.fromtimestamp(msg_date), '%d.%m.%Y'), '%d.%m.%Y')
     temp = ''
     try:
         if msg == 'all':
@@ -200,10 +201,11 @@ def counting_show(chat_id, msg_date, msg):
             if len(result) is 0:
                 raise Exception
             for row in result:
-                if msg_date < int(row[3]):
+                date = datetime.datetime.strptime(row[3], '%d.%m.%Y')
+                if msg_date < date:
                     date = 0  # Don't count for the future
                 else:
-                    date = int(msg_date - int(row[3])) // 86400
+                    date = (msg_date - date).days
                 date = '️⃣'.join(tuple(str(date)))
                 if len(temp + row[2]) < 1000:
                     temp += f'Day\'s since {row[2]}: {date}️⃣\n'
@@ -214,17 +216,19 @@ def counting_show(chat_id, msg_date, msg):
         else:
             c.execute("SELECT * FROM MAIN WHERE CHAT_ID=? AND NAME=?", (str(chat_id), str(msg)))
             result = c.fetchone()
-            if msg_date < int(result[3]):
-                    date = 0  # Don't count for the future
+            date = datetime.datetime.strptime(result[3], '%d.%m.%Y')
+            print('!!!\n', msg_date, date, '\n!!!\n')
+            if msg_date < date:
+                date = 0  # Don't count for the future
             else:
-                date = int(msg_date - int(result[3])) // 86400
+                date = (msg_date - date).days
             date = '️⃣'.join(tuple(str(date)))
             temp += f'Day\'s since {result[2]}: {date}️⃣\n'
-    except:
+    except Exception as e:
         connect.close()
         temp = 'Nothing to show'
         send_msg(chat_id=chat_id, msg=temp)
-        echo(date=msg_date, chat=chat_id, msg=f'{msg} - {sys.exc_info()}', warn=True)
+        echo(chat=chat_id, date=msg_date.strftime('%d.%m.%Y'), msg=f'{msg} - {e}', warn=True)
         return 0
     connect.close()
     send_msg(chat_id=chat_id, msg=temp)
@@ -237,15 +241,15 @@ def counting_reset(chat_id, msg_date, msg):
         c = connect.cursor()
         temp = ''
         # reset all by design
-        c.execute("UPDATE MAIN SET TIME=? WHERE CHAT_ID=? AND NAME=?", (int(time.mktime(datetime.datetime.strptime(datetime.datetime.fromtimestamp(int(msg_date)).strftime("%d.%m.%Y"), "%d.%m.%Y").timetuple())), str(chat_id), str(msg)))
+        c.execute("UPDATE MAIN SET TIME=? WHERE CHAT_ID=? AND NAME=?", (datetime.datetime.fromtimestamp(msg_date).strftime('%d.%m.%Y'), str(chat_id), str(msg)))
         result = c.fetchall()
         if connect.total_changes is 0:
             raise Exception
         temp = f'Resetting {connect.total_changes} records'
         connect.commit()
         connect.close()
-    except:
-        echo(date=msg_date, chat=chat_id, msg=sys.exc_info(), warn=True)
+    except Exception as e:
+        echo(chat=chat_id, date=msg_date, msg=e, warn=True)
         temp = 'Nothing to reset'
     send_msg(chat_id=chat_id, msg=temp)
 
@@ -258,11 +262,16 @@ def counting_delete(chat_id, msg_date, msg):
         result = c.execute("SELECT TIME FROM MAIN WHERE CHAT_ID=? AND ID=(SELECT MIN(ID) FROM MAIN WHERE CHAT_ID=? AND NAME=?)", (str(chat_id), str(chat_id), str(msg)))
         date = c.fetchone()
         c.execute("DELETE FROM MAIN WHERE CHAT_ID=? AND ID=(SELECT MIN(ID) FROM MAIN WHERE CHAT_ID=? AND NAME=?)", (str(chat_id), str(chat_id), str(msg)))
-        date = round(int(time.time() - int(date[0])) // 86400)
+        date = datetime.datetime.strptime(date[0], '%d.%m.%Y')
+        msg_date = datetime.datetime.strptime(datetime.datetime.strftime(datetime.datetime.fromtimestamp(msg_date), '%d.%m.%Y'), '%d.%m.%Y')
+        if msg_date < date:
+            date = 0  # Don't count for the future
+        else:
+            date = (msg_date - date).days
         date = '️⃣'.join(tuple(str(date)))
         temp = f'I delete counting for {msg} since {date}️⃣ days!'
-    except:
-        echo(date=msg_date, chat=chat_id, msg=sys.exc_info(), warn=True)
+    except Exception as e:
+        echo(chat=chat_id, date=msg_date, msg=e, warn=True)
         temp = 'Nothing to delete'
     connect.commit()
     connect.close()
