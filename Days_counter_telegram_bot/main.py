@@ -147,7 +147,7 @@ def echo(id='...', date=time.time(), user='...', chat='...', msg='...', warn=Fal
 
 def send_msg(chat_id, msg='Good day, sir!'):
     msg = urllib.parse.quote_plus(msg)
-    req = f'{I.HOST}/sendMessage?chat_id={chat_id}&text={msg}&parse_mode=markdown'
+    req = f'{I.HOST}/sendMessage?chat_id={chat_id}&text={msg}'
     return action(req)
 
 
