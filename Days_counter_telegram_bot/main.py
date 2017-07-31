@@ -4,9 +4,11 @@ Can count days since smth, for example - last jewish tricks
 '''
 import datetime
 import json
+import os
 import re
 import requests
 import sqlite3
+import sys
 import time
 import urllib
 
@@ -18,7 +20,7 @@ class Init():
         self.LAST_ID = None
         self.LAST_PRECIOUS = 0
         self.OWNER_ID = config.owner_id
-        self.DB_NAME = config.db_name
+        self.DB_NAME = f'{os.path.dirname(sys.argv[0])}/{config.db_name}'
 
 
 def main():
